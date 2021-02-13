@@ -2,7 +2,6 @@
   (:require [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.ring.coercion :as rrc]
-            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [org.httpkit.server :as server]
             [ring.middleware.defaults :as defaults])
   (:gen-class))
