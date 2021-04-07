@@ -3,45 +3,23 @@
             [reitit.coercion.spec]
             [reitit.ring.coercion :as rrc]
             [org.httpkit.server :as server]
+            [clojure.data.json :as js]
             [ring.middleware.defaults :as defaults])
   (:gen-class))
 
-(def state (atom {:sum 0}))
-(defn get-sum [] (@state :sum))
-(defn add-sum! [x]
-  (let [new-sum (+ (@state :sum) x)
-        _ (swap! state assoc :sum new-sum)]
-    new-sum))
-(defn reset-sum! [n] (swap! state assoc :sum n))
+(defn coerce [js-data & {:keys [keywordize?]}]
+  (try (js/read-str js-data :key-fn (if keywordize? keyword identity))
+       (catch Exception e "malformed JSON data!")))
 
 (def routes
   [
-   ["/sum"
-   {:get {:summary "Get the sum"
-          :parameters {} #_{:query {:x int?, :y int?}}
-          :responses {200 {:body {:sum int?}}}
-          :handler (fn [_]
+   ["/coerce"
+   {:get {:summary "json->edn"
+          :parameters {:query {:json string? :keywordize boolean?}}
+          :responses {200 {:body {:edn any?}}}
+          :handler (fn [{{{:keys [json keywordize]} :query} :parameters}]
                      {:status 200
-                      :body {:sum (get-sum)}})}
-    :post {:summary "Reset the sum"
-           :parameters {:query {:sum int?}}
-           :responses {200 {:body {:sum int?}}}
-           :handler (fn [{{{:keys [sum]} :query} :parameters}]
-                     (reset-sum!)
-                      {:status 200
-                       :body {:sum sum}})}}]
-   ["/add"
-    {:post {:summary "Add to the sum"
-            :parameters {:query {:x int?}}
-            :responses {200 {:body {:sum int?}}}
-            :handler (fn [{{{:keys [x]} :query} :parameters}]
-                       {:status 200
-                        :body {:sum (add-sum! x)}})}}]
-    ["/math" {:get {:parameters {:query {:x int?, :y int?}}
-                    :responses {200 {:body {:total pos-int?}}}
-                    :handler (fn [{{{:keys [x y]} :query} :parameters}]
-                               {:status 200
-                                :body {:total (+ x y)}})}}]])
+                      :body {:edn (coerce json :keywordize? keywordize)}})}}]])
 
 (def app
   (ring/ring-handler
