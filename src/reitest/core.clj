@@ -19,7 +19,7 @@
           :responses {200 {:body {:edn any?}}}
           :handler (fn [{{{:keys [json keywordize]} :query} :parameters}]
                      {:status 200
-                      :body {:edn (coerce json :keywordize? keywordize)}})}}
+                      :body {:edn (coerce json :keywordize? keywordize)}})}
     :post {:summary "json->edn"
            :parameters {:query {:json string? :keywordize boolean?}}
            :responses {200 {:body {:edn any?}}}
